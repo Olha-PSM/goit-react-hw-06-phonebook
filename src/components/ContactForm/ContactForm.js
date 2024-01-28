@@ -8,6 +8,11 @@ import {
   ErrorMsg,
 } from './ContactForm.styled';
 
+import { useDispatch, useSelector } from 'react-redux';
+import { addContact } from 'store/contactsSlice';
+import { getContacts } from 'store/selector';
+import Notiflix from 'notiflix';
+
 const ContactSchema = Yup.object().shape({
   name: Yup.string()
     .min(2, 'Too Short!')
@@ -16,7 +21,24 @@ const ContactSchema = Yup.object().shape({
   number: Yup.number().required('Required'),
 });
 
-export const ContactForm = ({ onAdd }) => {
+export const ContactForm = () => {
+  const contacts = useSelector(getContacts);
+  const dispatch = useDispatch();
+
+  const checkedContact = contact => {
+    return contacts.some(
+      element => element.name.toLowerCase() === contact.name.toLowerCase()
+    );
+  };
+
+  const newContact = contact => {
+    if (checkedContact(contact)) {
+      Notiflix.Notify.failure(`${contact.name} already in contacts`);
+    } else {
+      dispatch(addContact(contact));
+    }
+  };
+
   return (
     <Formik
       initialValues={{
@@ -25,8 +47,7 @@ export const ContactForm = ({ onAdd }) => {
       }}
       validationSchema={ContactSchema}
       onSubmit={(values, actions) => {
-        onAdd(values);
-        console.log(values);
+        newContact(values);
         actions.resetForm();
       }}
     >
